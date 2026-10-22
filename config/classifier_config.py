@@ -48,22 +48,21 @@ INTENT_ORDER = (
 
 INTENT_DEFINITIONS = {
     "INFORM": (
-        "Riportare fatti, aggiornamenti, avvisi, dati "
-        "o indicazioni pratiche sull'emergenza."
+        "This post primarily reports factual information, "
+        "updates, alerts, events, conditions, or instructions."
     ),
     "INTERPRET": (
-        "Spiegare o commentare cause, conseguenze, "
-        "contesto e significato dell'emergenza."
+        "This post primarily explains, contextualizes, "
+        "interprets, or analyzes what is happening and why."
     ),
     "INSPIRE": (
-        "Esprimere solidarietà, sostegno, speranza, "
-        "gratitudine o ricordo, oppure invitare "
-        "ad aiutare e a mobilitarsi."
+        "This post primarily expresses emotion, solidarity, "
+        "encouragement, hope, support, or calls for community action."
     ),
     "INVESTIGATE": (
-        "Sollevare domande, critiche o richieste "
-        "di responsabilità su decisioni, problemi "
-        "o mancanze legati all'emergenza."
+        "This post primarily questions, verifies, challenges, "
+        "criticizes, exposes, or investigates claims, causes, "
+        "responsabilities, or possible wrongdoing."
     ),
 }
 
