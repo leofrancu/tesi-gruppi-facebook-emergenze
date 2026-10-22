@@ -13,9 +13,9 @@ Università degli Studi di Torino — A.A. 2025/2026
 
 Questo repository raccoglie il codice sorgente Python, le configurazioni e la documentazione tecnica sviluppati nell'ambito della tesi:
 
-> **Dinamiche emotive e reti di condivisione nei gruppi Facebook durante le emergenze: un'analisi comparata tra eventi a insorgenza improvvisa e prevedibile.**
+*Dinamiche emotive e reti di condivisione nei gruppi Facebook durante le emergenze: un'analisi comparata tra eventi a insorgenza improvvisa e prevedibile.*
 
-L'obiettivo del repository è documentare le procedure computazionali adottate, garantire la tracciabilità delle scelte implementative e favorire la **riproducibilità metodologica** della ricerca.
+L'obiettivo del repository è documentare le procedure computazionali adottate, garantire la tracciabilità delle scelte implementative e favorire la riproducibilità metodologica della ricerca.
 
 Lo studio esamina la comunicazione nei gruppi Facebook pubblici durante otto emergenze naturali, analizzando la risposta del pubblico attraverso le reaction, le funzioni comunicative dei contenuti e le relazioni di co-condivisione tra gruppi.
 
@@ -25,19 +25,23 @@ Le analisi sono state sviluppate in Python ed eseguite all'interno del **Meta Se
 
 ## 2. Obiettivi della ricerca
 
-La ricerca si articola in quattro principali dimensioni analitiche:
+La ricerca si articola in quattro principali dimensioni analitiche.
 
-1. **Analisi temporale delle reaction**  
-   Esaminare come varia la distribuzione delle reaction associate ai contenuti pubblicati nelle diverse fasi di un'emergenza.
+### Analisi temporale delle reaction
 
-2. **Classificazione degli intenti comunicativi**  
-   Identificare le principali funzioni comunicative dei post mediante un modello multilingue di classificazione zero-shot.
+Esaminare come varia la distribuzione delle reaction associate ai contenuti pubblicati nelle diverse fasi di un'emergenza.
 
-3. **Analisi delle reti di co-condivisione**  
-   Ricostruire le relazioni tra gruppi Facebook sulla base della condivisione di contenuti e collegamenti comuni.
+### Classificazione degli intenti comunicativi
 
-4. **Analisi comparativa**  
-   Confrontare i risultati ottenuti in emergenze caratterizzate da differenti tempi di preavviso (*lead time*).
+Identificare le principali funzioni comunicative dei post mediante un modello multilingue di classificazione zero-shot.
+
+### Analisi delle reti di co-condivisione
+
+Ricostruire le relazioni tra gruppi Facebook sulla base della condivisione di contenuti e collegamenti comuni.
+
+### Analisi comparativa
+
+Confrontare i risultati ottenuti in emergenze caratterizzate da differenti tempi di preavviso (*lead time*).
 
 ---
 
@@ -46,7 +50,7 @@ La ricerca si articola in quattro principali dimensioni analitiche:
 Il campione comprende otto emergenze naturali verificatesi tra il 2021 e il 2024.
 
 | Evento | Area geografica | Anno |
-|:---|:---|:---:|
+|---|---|---|
 | Eruzione del Cumbre Vieja | La Palma, Spagna | 2021 |
 | Tifone Rai (Odette) | Filippine | 2021 |
 | Terremoto di Turchia e Siria | Turchia e Siria | 2023 |
@@ -64,7 +68,7 @@ Per ciascun evento è stata definita una data di riferimento (**T0**) e una fine
 
 ### 4.1 Raccolta e preparazione dei dati
 
-I dati sono stati acquisiti mediante interrogazioni testuali della **Meta Content Library API**, limitando la ricerca ai post pubblicati nei gruppi Facebook pubblici.
+I dati sono stati acquisiti mediante interrogazioni testuali della Meta Content Library API, limitando la ricerca ai post pubblicati nei gruppi Facebook pubblici.
 
 Le interrogazioni sono state definite individualmente per ciascun evento, utilizzando termini di ricerca pertinenti al fenomeno e all'area geografica interessata.
 
@@ -78,16 +82,16 @@ La preparazione dei dati comprende:
 
 ### 4.2 Segmentazione temporale
 
-Per garantire la comparabilità delle analisi, è stata adottata una finestra di osservazione compresa tra **7 giorni precedenti e 14 giorni successivi a T0**.
+Per garantire la comparabilità delle analisi, è stata adottata una finestra di osservazione compresa tra 7 giorni precedenti e 14 giorni successivi a T0.
 
 I post sono suddivisi in quattro fasi sulla base del giorno di pubblicazione rispetto a T0.
 
 | Fase | Giorni rispetto a T0 | Descrizione |
-|:---|:---:|:---|
-| **Pre** | −7 / −1 | Periodo precedente all'evento |
-| **Evento** | 0 / +1 | Fase iniziale dell'emergenza |
-| **Post1** | +2 / +7 | Prima fase successiva |
-| **Post2** | +8 / +14 | Seconda fase successiva |
+|---|---|---|
+| Pre | −7 / −1 | Periodo precedente all'evento |
+| Evento | 0 / +1 | Fase iniziale dell'emergenza |
+| Post1 | +2 / +7 | Prima fase successiva |
+| Post2 | +8 / +14 | Seconda fase successiva |
 
 La segmentazione è basata sui giorni di calendario, utilizzando riferimenti temporali in UTC.
 
@@ -106,22 +110,22 @@ Per ciascun evento e fase temporale vengono calcolati:
 - Distribuzione percentuale delle singole reaction.
 - Numero medio di reaction per post.
 
-Le distribuzioni percentuali sono calcolate sul **totale delle reaction**, e non come media delle percentuali dei singoli post.
+Le distribuzioni percentuali sono calcolate sul totale delle reaction, e non come media delle percentuali dei singoli post.
 
-> **Nota metodologica:** i conteggi delle reaction si riferiscono al momento dell'estrazione dei dati. Le fasi temporali identificano quindi il periodo di pubblicazione dei post, non necessariamente il momento in cui le reaction sono state espresse.
+**Nota metodologica:** i conteggi delle reaction si riferiscono al momento dell'estrazione dei dati. Le fasi temporali identificano quindi il periodo di pubblicazione dei post, non necessariamente il momento in cui le reaction sono state espresse.
 
 ### 4.4 Classificazione degli intenti comunicativi
 
-La classificazione automatica dei post utilizza un approccio **zero-shot basato sulla Natural Language Inference (NLI)**.
+La classificazione automatica dei post utilizza un approccio zero-shot basato sulla **Natural Language Inference (NLI)**.
 
 Il modello impiegato è:
 
-**`MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7`**
+`MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7`
 
 La classificazione distingue quattro funzioni comunicative:
 
 | Funzione | Definizione operativa |
-|:---|:---|
+|---|---|
 | **INFORM** | Riportare fatti, aggiornamenti, avvisi, dati e indicazioni pratiche. |
 | **INTERPRET** | Spiegare o commentare cause, conseguenze, contesto e significato dell'emergenza. |
 | **INSPIRE** | Esprimere solidarietà, sostegno e speranza oppure promuovere aiuto e mobilitazione. |
@@ -151,15 +155,19 @@ La rappresentazione adottata prevede:
 
 L'analisi comprende:
 
-- Costruzione dei grafi di co-condivisione.
-- Calcolo dei profili di reaction dei gruppi.
-- Misurazione della similarità mediante **similarità del coseno**.
-- Confronto tra gruppi collegati e non collegati.
-- Valutazione statistica attraverso **test di permutazione**.
+1. Costruzione dei grafi di co-condivisione.
+2. Calcolo dei profili di reaction dei gruppi.
+3. Misurazione della similarità mediante similarità del coseno.
+4. Confronto tra gruppi collegati e non collegati.
+5. Valutazione statistica attraverso test di permutazione.
 
 ---
 
 ## 5. Struttura del repository
+
+Il repository è organizzato in moduli Python che rispecchiano le principali fasi della procedura analitica sviluppata nel Meta Secure Research Environment (SRE).
+
+La struttura prevista è la seguente:
 
 ```text
 tesi-gruppi-facebook-emergenze/
@@ -170,36 +178,46 @@ tesi-gruppi-facebook-emergenze/
 ├── .gitignore
 │
 ├── config/
+│   ├── README.md
 │   ├── events.py
 │   └── classifier_config.py
 │
-├── src/
-│   ├── 01_collection.py
-│   ├── 02_preprocessing.py
-│   ├── 03_temporal_phases.py
-│   ├── 04_reactions.py
-│   ├── 05_intent_classifier.py
-│   ├── 06_intent_analysis.py
-│   ├── 07_network.py
-│   ├── 08_network_statistics.py
-│   ├── 09_comparative_analysis.py
-│   └── 10_visualizations.py
-│
-└── tests/
-    ├── test_preprocessing.py
-    ├── test_temporal_phases.py
-    └── test_reactions.py
+└── src/
+    ├── collection.py
+    ├── preprocessing.py
+    ├── temporal_analysis.py
+    ├── reaction_analysis.py
+    ├── intent_classification.py
+    ├── intent_analysis.py
+    ├── network_analysis.py
+    ├── network_statistics.py
+    ├── statistical_analysis.py
+    └── visualizations.py
 ```
 
 ### Organizzazione del codice
 
-| Directory | Contenuto |
-|:---|:---|
-| `config/` | Configurazioni degli eventi e parametri del classificatore. |
-| `src/` | Script Python per raccolta, preparazione, classificazione e analisi. |
-| `tests/` | Test automatici per verificare il comportamento delle procedure. |
+| Modulo | Funzione |
+|---|---|
+| `config/README.md` | Documentazione delle configurazioni della ricerca. |
+| `config/events.py` | Definizione delle finestre temporali e dei parametri degli eventi. |
+| `config/classifier_config.py` | Configurazione del modello NLI e delle funzioni comunicative. |
+| `src/collection.py` | Procedure di raccolta dei dati mediante Meta Content Library API. |
+| `src/preprocessing.py` | Normalizzazione, pulizia e preparazione dei dataset. |
+| `src/temporal_analysis.py` | Assegnazione delle fasi temporali rispetto a T0. |
+| `src/reaction_analysis.py` | Analisi delle distribuzioni e dell'evoluzione delle reaction. |
+| `src/intent_classification.py` | Classificazione zero-shot delle funzioni comunicative. |
+| `src/intent_analysis.py` | Analisi degli intenti nelle diverse fasi dell'emergenza. |
+| `src/network_analysis.py` | Costruzione delle reti di co-condivisione tra gruppi Facebook. |
+| `src/network_statistics.py` | Calcolo della similarità dei profili di reaction e test di permutazione. |
+| `src/statistical_analysis.py` | Analisi statistiche delle reaction e confronto tra eventi. |
+| `src/visualizations.py` | Produzione delle rappresentazioni grafiche dei risultati. |
 
-Gli script sono organizzati secondo la sequenza logica delle elaborazioni, dalla raccolta dei dati alla produzione dei risultati e delle visualizzazioni.
+Gli script seguono la sequenza metodologica della ricerca: raccolta dei dati, preprocessing, segmentazione temporale, analisi delle reaction, classificazione degli intenti, costruzione delle reti e confronto dei risultati.
+
+I moduli sono progettati per essere riutilizzabili su eventi differenti, mediante configurazioni specifiche, senza incorporare nel codice i dati originali raccolti attraverso Meta Content Library.
+
+**Stato di implementazione:** i file `collection.py`, `statistical_analysis.py` e `visualizations.py` sono previsti ma non risultano ancora presenti nella struttura GitHub verificata. Le funzionalità degli altri moduli sono in fase di revisione per verificarne la compatibilità con le procedure SRE.
 
 ---
 
@@ -209,32 +227,32 @@ Gli script sono organizzati secondo la sequenza logica delle elaborazioni, dalla
 
 **Ambiente di ricerca:** Meta Secure Research Environment (SRE)
 
-**Strumenti e librerie principali:**
+### Strumenti e librerie principali
 
-- `pandas` — Gestione e trasformazione dei dati.
-- `numpy` — Elaborazione numerica.
-- `scipy` — Analisi statistica.
-- `networkx` — Costruzione e analisi delle reti.
-- `scikit-learn` — Metriche di similarità.
-- `torch` — Esecuzione del modello neurale.
-- `transformers` — Inferenza NLI.
-- `matplotlib` — Visualizzazione dei risultati.
+- **pandas** — Gestione e trasformazione dei dati.
+- **numpy** — Elaborazione numerica.
+- **scipy** — Analisi statistica.
+- **networkx** — Costruzione e analisi delle reti.
+- **scikit-learn** — Metriche di similarità.
+- **torch** — Esecuzione del modello neurale.
+- **transformers** — Inferenza NLI.
+- **matplotlib** — Visualizzazione dei risultati.
 
-Le dipendenze del progetto sono documentate nel file `requirements.txt`.
+Le dipendenze del progetto saranno documentate nel file `requirements.txt`.
 
 ---
 
 ## 7. Riproducibilità e accesso ai dati
 
-Il repository è finalizzato alla **trasparenza delle procedure computazionali** e alla riproducibilità metodologica della ricerca.
+Il repository è finalizzato alla trasparenza delle procedure computazionali e alla riproducibilità metodologica della ricerca.
 
 I dati individuali acquisiti attraverso la Meta Content Library API non sono pubblicati né distribuiti nel repository.
 
 L'esecuzione delle procedure sui dati originali richiede:
 
-1. Autorizzazione all'accesso alla Meta Content Library.
-2. Disponibilità del Meta Secure Research Environment.
-3. Rispetto delle condizioni di utilizzo e delle restrizioni previste da Meta.
+- Autorizzazione all'accesso alla Meta Content Library.
+- Disponibilità del Meta Secure Research Environment.
+- Rispetto delle condizioni di utilizzo e delle restrizioni previste da Meta.
 
 La disponibilità pubblica del codice non implica la disponibilità pubblica dei dataset.
 
@@ -259,7 +277,7 @@ Per la discussione completa delle scelte metodologiche e dei risultati si rimand
 
 Il codice sorgente è distribuito secondo i termini della **MIT License**.
 
-Per maggiori informazioni, consultare il file [LICENSE](LICENSE).
+Per maggiori informazioni, consultare il file `LICENSE`.
 
 La licenza riguarda esclusivamente i materiali del repository e non si estende ai dati originali della Meta Content Library.
 
