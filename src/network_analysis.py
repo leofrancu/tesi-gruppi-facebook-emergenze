@@ -24,11 +24,14 @@ Peso dell'arco:
 
 Il grafo è semplice, non orientato e pesato.
 
-La rete finale comprende soltanto gruppi
-con almeno un collegamento.
+Per impostazione predefinita, la rete comprende
+soltanto gruppi con almeno un collegamento.
 
 Il modulo non utilizza hashtag, parole chiave
 o similarità semantica.
+
+La sincronia temporale non viene utilizzata
+come criterio di costruzione degli archi.
 
 Autore: Leonardo Cosmin Francu
 Università degli Studi di Torino
@@ -48,16 +51,57 @@ import pandas as pd
 # ============================================================
 
 DEFAULT_GROUP_COLUMN = "group_id"
-
 DEFAULT_SHARED_POST_COLUMN = "shared_post_id"
-
 DEFAULT_LINK_COLUMN = "link_attachment"
-
 DEFAULT_CONTENT_COLUMN = "shared_content"
 
 
 # ============================================================
-# 2. NORMALIZZAZIONE DEGLI IDENTIFICATIVI
+# 2. VALIDAZIONE DEL DATASET
+# ============================================================
+
+def validate_dataframe(df):
+    """
+    Verifica che l'input sia un DataFrame pandas
+    e che non contenga nomi di colonne duplicati.
+    """
+
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError(
+            "L'input deve essere un pandas.DataFrame."
+        )
+
+    if not df.columns.is_unique:
+        raise ValueError(
+            "Il DataFrame contiene nomi di colonne duplicati."
+        )
+
+    return df
+
+
+def validate_columns(df, required_columns):
+    """
+    Verifica la presenza delle colonne richieste.
+    """
+
+    validate_dataframe(df)
+
+    missing = [
+        column
+        for column in required_columns
+        if column not in df.columns
+    ]
+
+    if missing:
+        raise ValueError(
+            f"Colonne mancanti nel dataset: {missing}"
+        )
+
+    return True
+
+
+# ============================================================
+# 3. NORMALIZZAZIONE DEGLI IDENTIFICATIVI
 # ============================================================
 
 def normalize_identifier(value):
@@ -100,22 +144,19 @@ def normalize_identifier(value):
 
 
 # ============================================================
-# 3. ESTRAZIONE DELL'IDENTIFICATIVO DEL GRUPPO
+# 4. ESTRAZIONE DELL'IDENTIFICATIVO DEL GRUPPO
 # ============================================================
 
-def extract_group_id(
-    value,
-    id_key="id",
-):
+def extract_group_id(value, id_key="id"):
     """
     Estrae l'identificativo di un gruppo.
 
     Supporta:
-    - ID già presente come stringa;
+    - identificativo già presente come stringa;
     - dizionario contenente la chiave 'id'.
 
-    Non identifica automaticamente il gruppo
-    a partire da un nome visualizzato.
+    Non ricava automaticamente l'ID da nomi
+    visualizzati o da altri campi testuali.
     """
 
     if isinstance(value, dict):
@@ -130,28 +171,31 @@ def prepare_group_ids(
     output_column="group_id",
 ):
     """
-    Prepara la colonna degli identificativi
-    dei gruppi Facebook.
+    Prepara gli identificativi dei gruppi.
 
     Parameters
     ----------
+    df : pandas.DataFrame
+        Dataset dei post.
+
     source_column : str
         Colonna contenente l'ID del gruppo
         oppure un dizionario con il suo ID.
 
     output_column : str
-        Colonna da creare.
+        Nome della colonna da creare.
 
     Returns
     -------
     pandas.DataFrame
-        Copia del dataset con group_id.
+        Copia del dataset con identificativi
+        normalizzati.
     """
 
-    if source_column not in df.columns:
-        raise KeyError(
-            f"Colonna mancante: {source_column}"
-        )
+    validate_columns(
+        df,
+        [source_column],
+    )
 
     result = df.copy()
 
@@ -164,7 +208,7 @@ def prepare_group_ids(
 
 
 # ============================================================
-# 4. ESTRAZIONE DEI LINK
+# 5. ESTRAZIONE E NORMALIZZAZIONE DEGLI URL
 # ============================================================
 
 def extract_link(value):
@@ -175,13 +219,9 @@ def extract_link(value):
     - url
     - link
     - href
-
-    La funzione non inventa URL
-    quando il campo è assente.
     """
 
     if isinstance(value, dict):
-
         value = (
             value.get("url")
             or value.get("link")
@@ -193,7 +233,7 @@ def extract_link(value):
 
 def normalize_url(url):
     """
-    Applica una normalizzazione conservativa agli URL.
+    Normalizzazione conservativa degli URL.
 
     Operazioni:
     - rimozione degli spazi esterni;
@@ -203,9 +243,6 @@ def normalize_url(url):
     Non elimina parametri di query.
     Non risolve redirect.
     Non modifica il percorso.
-
-    La normalizzazione può essere disattivata
-    nella costruzione degli identificativi.
     """
 
     url = extract_link(url)
@@ -236,7 +273,7 @@ def normalize_url(url):
 
 
 # ============================================================
-# 5. IDENTIFICAZIONE DEL CONTENUTO CONDIVISO
+# 6. IDENTIFICAZIONE DEL CONTENUTO CONDIVISO
 # ============================================================
 
 def extract_shared_content(
@@ -245,24 +282,14 @@ def extract_shared_content(
     normalize_links=False,
 ):
     """
-    Identifica il contenuto condiviso.
+    Identifica un contenuto condiviso.
 
     Priorità:
     1. shared_post_id
     2. link_attachment
 
-    Returns
-    -------
-    str or None
-        Identificativo del contenuto.
-
-    Notes
-    -----
-    I prefissi POST_ e URL_ evitano collisioni
-    tra identificativi di tipo diverso.
-
-    normalize_links=False mantiene gli URL
-    nella forma registrata nel dataset.
+    I prefissi POST_ e URL_ impediscono
+    collisioni tra identificativi diversi.
     """
 
     shared_id = normalize_identifier(
@@ -270,7 +297,6 @@ def extract_shared_content(
     )
 
     if shared_id is not None:
-
         return "POST_" + shared_id
 
     link = extract_link(
@@ -296,17 +322,20 @@ def prepare_shared_contents(
     """
     Aggiunge l'identificativo del contenuto condiviso.
 
-    Il dataset deve contenere almeno una
-    delle due colonne sorgente.
+    È necessaria almeno una delle due colonne:
+    shared_post_id oppure link_attachment.
     """
+
+    validate_dataframe(df)
 
     if (
         shared_post_column not in df.columns
         and link_column not in df.columns
     ):
         raise ValueError(
-            "Nessuna colonna disponibile per "
-            "identificare i contenuti condivisi."
+            "Impossibile identificare i contenuti condivisi: "
+            f"mancano sia '{shared_post_column}' "
+            f"sia '{link_column}'."
         )
 
     result = df.copy()
@@ -316,18 +345,14 @@ def prepare_shared_contents(
             shared_post_column
         ].tolist()
     else:
-        shared_values = [
-            None
-        ] * len(result)
+        shared_values = [None] * len(result)
 
     if link_column in result.columns:
         link_values = result[
             link_column
         ].tolist()
     else:
-        link_values = [
-            None
-        ] * len(result)
+        link_values = [None] * len(result)
 
     result[output_column] = [
         extract_shared_content(
@@ -345,7 +370,7 @@ def prepare_shared_contents(
 
 
 # ============================================================
-# 6. PREPARAZIONE DELLE COPPIE GRUPPO-CONTENUTO
+# 7. PREPARAZIONE DELLE COPPIE GRUPPO-CONTENUTO
 # ============================================================
 
 def prepare_group_content_pairs(
@@ -357,35 +382,16 @@ def prepare_group_content_pairs(
     Prepara le coppie distinte gruppo-contenuto.
 
     Un gruppo che pubblica più volte lo stesso
-    contenuto viene contato una sola volta
-    per quel contenuto.
-
-    Returns
-    -------
-    pandas.DataFrame
-        Colonne:
-        - group_id
-        - shared_content
+    contenuto viene contato una sola volta.
     """
 
-    required = [
-        group_column,
-        content_column,
-    ]
-
-    missing = [
-        col
-        for col in required
-        if col not in df.columns
-    ]
-
-    if missing:
-        raise ValueError(
-            f"Colonne mancanti: {missing}"
-        )
+    validate_columns(
+        df,
+        [group_column, content_column],
+    )
 
     pairs = df[
-        required
+        [group_column, content_column]
     ].copy()
 
     pairs[group_column] = (
@@ -401,10 +407,16 @@ def prepare_group_content_pairs(
     pairs = (
         pairs
         .dropna(
-            subset=required
+            subset=[
+                group_column,
+                content_column,
+            ]
         )
         .drop_duplicates(
-            subset=required
+            subset=[
+                group_column,
+                content_column,
+            ]
         )
         .reset_index(drop=True)
     )
@@ -413,7 +425,7 @@ def prepare_group_content_pairs(
 
 
 # ============================================================
-# 7. IDENTIFICAZIONE DEI CONTENUTI CONDIVISI
+# 8. IDENTIFICAZIONE DEI CONTENUTI CONDIVISI
 # ============================================================
 
 def get_shared_content_groups(
@@ -432,16 +444,10 @@ def get_shared_content_groups(
         Valore: lista ordinata di gruppi.
     """
 
-    required = {
-        group_column,
-        content_column,
-    }
-
-    if not required.issubset(pairs.columns):
-        raise ValueError(
-            "Il dataset non contiene le colonne "
-            "gruppo e contenuto."
-        )
+    validate_columns(
+        pairs,
+        [group_column, content_column],
+    )
 
     grouped = (
         pairs.groupby(
@@ -462,25 +468,18 @@ def get_shared_content_groups(
 
 
 # ============================================================
-# 8. COSTRUZIONE DEGLI ARCHI
+# 9. COSTRUZIONE DEGLI ARCHI
 # ============================================================
 
-def build_edge_weights(
-    content_groups,
-):
+def build_edge_weights(content_groups):
     """
     Costruisce gli archi pesati.
 
     Per ogni contenuto condiviso vengono
     generate tutte le coppie di gruppi.
 
-    Il peso aumenta di uno per ciascun
+    Il peso aumenta di uno per ogni
     contenuto distinto condiviso.
-
-    Returns
-    -------
-    dict
-        (group_a, group_b) -> weight
     """
 
     edge_weights = defaultdict(int)
@@ -498,7 +497,6 @@ def build_edge_weights(
             unique_groups,
             2,
         ):
-
             edge_weights[
                 (group_a, group_b)
             ] += 1
@@ -507,7 +505,7 @@ def build_edge_weights(
 
 
 # ============================================================
-# 9. COSTRUZIONE DEL GRAFO
+# 10. COSTRUZIONE DEL GRAFO
 # ============================================================
 
 def build_network(
@@ -516,24 +514,11 @@ def build_network(
     all_groups=None,
 ):
     """
-    Costruisce un grafo NetworkX non orientato.
+    Costruisce un grafo NetworkX non orientato
+    e pesato.
 
-    Parameters
-    ----------
-    edge_weights : dict
-        Dizionario delle coppie e dei pesi.
-
-    include_isolates : bool
-        Se True, aggiunge anche i gruppi
-        privi di collegamenti.
-
-    all_groups : iterable, optional
-        Elenco completo dei gruppi.
-
-    Returns
-    -------
-    networkx.Graph
-        Grafo non orientato e pesato.
+    Per impostazione predefinita, esclude
+    i gruppi privi di collegamenti.
     """
 
     graph = nx.Graph()
@@ -547,8 +532,7 @@ def build_network(
 
         if weight <= 0:
             raise ValueError(
-                "I pesi degli archi devono "
-                "essere positivi."
+                "I pesi degli archi devono essere positivi."
             )
 
         graph.add_edge(
@@ -578,7 +562,7 @@ def build_network(
 
 
 # ============================================================
-# 10. PIPELINE COMPLETA DELLA RETE
+# 11. PIPELINE COMPLETA DELLA RETE
 # ============================================================
 
 def construct_co_sharing_network(
@@ -593,26 +577,6 @@ def construct_co_sharing_network(
     Costruisce la rete di co-condivisione
     a partire dal dataset dei post.
 
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        Dataset contenente i post.
-
-    group_source_column : str
-        Colonna da cui ricavare l'ID del gruppo.
-
-    shared_post_column : str
-        Colonna dell'ID del post ricondiviso.
-
-    link_column : str
-        Colonna del link allegato.
-
-    normalize_links : bool
-        Se True, normalizza gli URL.
-
-    include_isolates : bool
-        Se True, conserva anche i gruppi isolati.
-
     Returns
     -------
     dict
@@ -623,11 +587,36 @@ def construct_co_sharing_network(
         - edge_weights
     """
 
+    validate_dataframe(df)
+
+    # Verifica esplicita della colonna dei gruppi.
+    # Nei dati Meta l'identificativo può provenire
+    # dal campo 'surface', che deve contenere un ID
+    # direttamente oppure in un dizionario.
+
+    if group_source_column not in df.columns:
+        raise ValueError(
+            f"Colonna '{group_source_column}' non trovata. "
+            "Identificare i gruppi Facebook a partire "
+            "dal campo 'surface' durante il preprocessing "
+            "oppure specificare group_source_column='surface' "
+            "se tale campo contiene identificativi validi."
+        )
+
     prepared = prepare_group_ids(
         df,
         source_column=group_source_column,
         output_column="group_id",
     )
+
+    # Verifica che siano presenti identificativi validi.
+
+    if prepared["group_id"].notna().sum() == 0:
+        raise ValueError(
+            "Nessun identificativo di gruppo valido. "
+            "Verificare il formato della colonna "
+            f"'{group_source_column}'."
+        )
 
     prepared = prepare_shared_contents(
         prepared,
@@ -675,13 +664,12 @@ def construct_co_sharing_network(
 
 
 # ============================================================
-# 11. STATISTICHE DESCRITTIVE DELLA RETE
+# 12. STATISTICHE DESCRITTIVE DELLA RETE
 # ============================================================
 
 def network_statistics(graph):
     """
-    Calcola le principali statistiche
-    descrittive del grafo.
+    Calcola le statistiche descrittive del grafo.
 
     Metriche:
     - numero di nodi;
@@ -713,13 +701,11 @@ def network_statistics(graph):
     )
 
     if n_nodes > 0:
-
         mean_degree = (
             sum(
                 dict(graph.degree()).values()
             ) / n_nodes
         )
-
     else:
         mean_degree = np.nan
 
@@ -748,7 +734,7 @@ def network_statistics(graph):
 
 
 # ============================================================
-# 12. TABELLA DEGLI ARCHI
+# 13. TABELLA DEGLI ARCHI
 # ============================================================
 
 def network_edge_table(graph):
@@ -785,7 +771,7 @@ def network_edge_table(graph):
 
 
 # ============================================================
-# 13. TABELLA DEI NODI
+# 14. TABELLA DEI NODI
 # ============================================================
 
 def network_node_table(graph):
@@ -805,7 +791,6 @@ def network_node_table(graph):
         nx.connected_components(graph),
         start=1,
     ):
-
         for node in component:
             component_map[node] = component_id
 
@@ -837,7 +822,7 @@ def network_node_table(graph):
 
 
 # ============================================================
-# 14. RIEPILOGO COMPLETO
+# 15. RIEPILOGO COMPLETO
 # ============================================================
 
 def network_analysis_summary(
