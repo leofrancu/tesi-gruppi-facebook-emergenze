@@ -1,0 +1,20 @@
+# Data processing
+numpy>=1.24,<3
+pandas>=2.0,<3
+
+# Statistical analysis
+scipy>=1.11,<2
+
+# Network analysis
+networkx>=3.1,<4
+
+# Visualizations
+matplotlib>=3.7,<4
+
+# Natural language inference
+torch>=2.1
+transformers>=4.36,<5
+sentencepiece>=0.1.99
+
+# Progress monitoring
+tqdm>=4.66
