@@ -218,3 +218,37 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ============================================================
+# Research data — Meta Content Library / SRE
+# ============================================================
+
+# Raw and processed datasets
+data/
+datasets/
+outputs/
+checkpoints/
+
+# Serialized data
+*.pkl
+*.pickle
+*.parquet
+*.feather
+
+# Data exports
+*.csv
+*.tsv
+*.xlsx
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+credentials.json
+secrets.json
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Operating system files
+.DS_Store
