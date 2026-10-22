@@ -24,6 +24,8 @@ Principi metodologici
 - I conteggi delle reaction non vengono normalizzati
   individualmente: le quote sono calcolate successivamente
   aggregando le reaction dei post.
+- L'identificazione dei gruppi Facebook è gestita
+  separatamente dal modulo di analisi delle reti.
 
 Autore: Leonardo Cosmin Francu
 Università degli Studi di Torino
@@ -79,7 +81,12 @@ def validate_columns(df, required_columns):
 
     if not isinstance(df, pd.DataFrame):
         raise TypeError(
-            "L'input deve essere un pandas DataFrame."
+            "L'input deve essere un pandas.DataFrame."
+        )
+
+    if not df.columns.is_unique:
+        raise ValueError(
+            "Il DataFrame contiene nomi di colonne duplicati."
         )
 
     missing = [
@@ -191,8 +198,8 @@ def normalize_datetime_column(
         Colonna temporale da creare.
 
     assume_utc : bool
-        Se True, considera UTC i timestamp privi
-        di indicazione del fuso orario.
+        Se True, interpreta come UTC i timestamp
+        validi privi di indicazione del fuso orario.
 
         Utilizzare questa opzione soltanto quando
         l'origine UTC dei dati è documentata.
@@ -201,8 +208,11 @@ def normalize_datetime_column(
     -----
     I timestamp non validi vengono convertiti in NaT.
 
-    Se assume_utc=False, i timestamp privi di
-    fuso orario generano un errore.
+    Se assume_utc=False, i timestamp validi privi
+    di fuso orario generano un errore.
+
+    La conversione supporta formati temporali misti
+    attraverso pandas >= 2.0.
     """
 
     validate_columns(
@@ -218,15 +228,23 @@ def normalize_datetime_column(
 
         for value in values.dropna():
 
-            timestamp = pd.Timestamp(value)
+            try:
+                timestamp = pd.Timestamp(value)
+
+            except (ValueError, TypeError, OverflowError):
+                continue
+
+            if pd.isna(timestamp):
+                continue
 
             if (
                 timestamp.tzinfo is None
                 or timestamp.utcoffset() is None
             ):
                 raise ValueError(
-                    "Sono presenti timestamp senza fuso "
-                    "orario. Verificare l'origine dei dati "
+                    "Sono presenti timestamp validi "
+                    "senza indicazione del fuso orario. "
+                    "Verificare l'origine dei dati "
                     "oppure impostare assume_utc=True."
                 )
 
@@ -234,6 +252,7 @@ def normalize_datetime_column(
         values,
         utc=True,
         errors="coerce",
+        format="mixed",
     )
 
     return result
@@ -456,6 +475,8 @@ def merge_intent_predictions(
 
     I post senza testo classificabile mantengono
     valori mancanti nelle colonne NLI.
+
+    L'indice originale viene preservato.
     """
 
     validate_columns(
@@ -494,6 +515,8 @@ def merge_intent_predictions(
             "Le predizioni contengono testi mancanti."
         )
 
+    original_index = df.index.copy()
+
     result = df.merge(
         predictions[
             [text_column, *INTENT_COLUMNS]
@@ -503,6 +526,14 @@ def merge_intent_predictions(
         validate="many_to_one",
         sort=False,
     )
+
+    if len(result) != len(df):
+        raise RuntimeError(
+            "La propagazione delle predizioni ha "
+            "modificato il numero di post."
+        )
+
+    result.index = original_index
 
     return result
 
